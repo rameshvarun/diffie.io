@@ -7,12 +7,11 @@
 
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/aes.js"></script>
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/rabbit.js"></script>
+<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
 
 <!-- Bootstrap -->
 <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-
-<script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/2.4.0/seedrandom.min.js"></script>
 
 <script>
 	function randomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
@@ -35,23 +34,28 @@
 
 	var SubstitutionCipher = {
 		encrypt : function(message, key) {
-			Math.seedrandom(key);
 			var encrypted = "";
 			for(var i = 0; i < message.length; ++i) {
-				var shift = randomInt(0, valid_characters.length);
-				var index = (valid_characters.indexOf(message[i]) + shift) % valid_characters.length;
+				var shift = CryptoJS.MD5("" + (i + key)).words[0];
+
+				var index = valid_characters.indexOf(message[i]) + shift;
+				while(index < 0) index += valid_characters.length;
+				index %= valid_characters.length
+
 				encrypted += valid_characters[index];
 			}
 			return encrypted;
 		},
 		decrypt : function(encrypted, key) {
-			Math.seedrandom(key);
 			var message = "";
 			for(var i = 0; i < encrypted.length; ++i) {
-				var shift = randomInt(0, valid_characters.length);
+				var shift = CryptoJS.MD5("" + (i + key)).words[0];
+
 				var index = valid_characters.indexOf(encrypted[i]) - shift;
 				while(index < 0) index += valid_characters.length;
-				message += valid_characters[index];
+				index %= valid_characters.length
+
+				message += valid_characters[index ];
 			}
 			return message;
 		}
@@ -69,7 +73,7 @@
     var SHARED_SECRET;
 
     var alphabet = "abcdefghijklmnopqrstuvwxyz";
-    var valid_characters = " -()0123456789" + alphabet;
+    var valid_characters = "-()0123456789" + alphabet;
 
     $(function() {
     	$('#publickey').html(MY_PUBLIC_KEY);
