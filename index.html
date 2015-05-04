@@ -63,10 +63,10 @@
 
 	var cipher = SubstitutionCipher;
 
-    var DHE_PRIME = 983; // Should be a safe prime
+    var DHE_PRIME = 2698727; // Should be a safe prime
     var DHE_BASE = 5;
 
-    var MY_SECRET = randomInt(0, 100);
+    var MY_SECRET = randomInt(0, 4000);
     var MY_PUBLIC_KEY = modExp(DHE_BASE, MY_SECRET, DHE_PRIME);
 
     var THEIR_PUBLIC_KEY;
@@ -76,11 +76,11 @@
     var valid_characters = "-()0123456789" + alphabet;
 
     $(function() {
-    	$('#publickey').html(MY_PUBLIC_KEY);
+    	$('#publickey').html(MY_PUBLIC_KEY.toString(36));
     	$('#start').click(function() {
-    		THEIR_PUBLIC_KEY = parseInt($('#theirkey').val());
+    		THEIR_PUBLIC_KEY = parseInt($('#theirkey').val(), 36);
     		SHARED_SECRET = modExp(THEIR_PUBLIC_KEY, MY_SECRET, DHE_PRIME);
-    		$('#shared').html(SHARED_SECRET);
+    		$('#shared').html(SHARED_SECRET.toString(36));
     		$("#keyenter").fadeOut();
     		$('#communicate').fadeIn();
     	});
