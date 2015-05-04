@@ -1,6 +1,6 @@
 // TODO: Load from environment variables
-global.PORT = 30;
-global.URL = "http://localhost:300";
+global.PORT = 3000;
+global.URL = "http://localhost:3000";
 
 var nunjucks = require('nunjucks');
 var app = require('express')();
@@ -20,10 +20,19 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', function (socket) {
+	var ROOM;
 	socket.on('join', function (data) {
 		// Join channel based off of the sha sum in data
 		// TODO: Confirm that data is a valid sha checksum
 		socket.join(data);
+		ROOM = data;
+		console.log("A user joined room " + ROOM + "...");
+	});
+
+	socket.on('message', function (data) {
+		// TODO: Do some checks to make sure data is am AES encrypted string
+		console.log("Message: " + data);
+		socket.broadcast.to(ROOM).emit('message', data);
 	});
 });
 

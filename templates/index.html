@@ -18,6 +18,17 @@
 
 <script>
 	var socket = io("{{ URL }}");
+	socket.on('message', function(data) {
+		var decrypted = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(data, SHARED_SECRET.toString()));
+		addMessage(false, decrypted);
+	});
+
+	function addMessage(mine, message) {
+		var text = mine ? "<b>Me:</b> " : "<b>Them:</b> ";
+		text += message;
+    	text += "<br>";
+    	$("#chatlog").html($("#chatlog").html() + text);
+    }
 
 	function randomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
 	function modExp(base, exponent, mod) {
@@ -94,18 +105,13 @@
     		socket.emit("join", sha);
     	});
 
-    	$('#encrypt').click(function() {
-    		var message = $('#ein').val();
-    		var encrypted = cipher.encrypt(message, SHARED_SECRET);
-    		$('#eout').html($('#eout').html() + "<br>" + message + " => " + encrypted);
-    		$('#ein').val("");
-    	});
+    	
 
-    	$('#decrypt').click(function() {
-    		var encrypted = $('#din').val();
-    		var message = cipher.decrypt(encrypted, SHARED_SECRET);
-    		$('#dout').html($('#dout').html() + "<br>" + encrypted + " => " + message);
-    		$('#din').val("");
+    	$('#send').click(function() {
+    		var message = $('#message').val();
+    		socket.emit("message", CryptoJS.AES.encrypt(message, SHARED_SECRET.toString()).toString());
+    		addMessage(true, message);
+    		$('#message').val("");
     	});
     })
 </script>
@@ -132,18 +138,10 @@ Their Public Key: <input id="theirkey"></input>
 
 <div id="communicate" hidden>
 Shared Secret: <div id='shared'></div>
-<div class="row">
-	<div class="col-sm-6">
-		Encrypt A Message:
-		<div id='eout' class="well"></div>
-		<input id='ein'></input><button id="encrypt">Encrypt</button>
-	</div>
-	<div class="col-sm-6">
-		Decrypt A Message:
-		<div id='dout' class="well"></div>
-		<input id='din'></input><button id="decrypt">Decrypt</button>
-	</div>
-</div>
+
+<div id='chatlog' class="well"></div>
+<input id='message'></input><button id="send">Send</button>
+
 </div>
 
 
