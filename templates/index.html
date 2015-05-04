@@ -8,12 +8,17 @@
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/aes.js"></script>
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/rabbit.js"></script>
 <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
+<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha1.js"></script>
 
 <!-- Bootstrap -->
 <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
+<script src="/socket.io/socket.io.js"></script>
+
 <script>
+	var socket = io("{{ URL }}");
+
 	function randomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
 	function modExp(base, exponent, mod) {
 		var answer = 1;
@@ -22,7 +27,7 @@
 		}
 		return answer;
 	}
-
+	
 	var AESCipher = {
 		encrypt : function(message, key) {
 			return CryptoJS.AES.encrypt(message, "" + key);
@@ -83,6 +88,10 @@
     		$('#shared').html(SHARED_SECRET.toString(36));
     		$("#keyenter").fadeOut();
     		$('#communicate').fadeIn();
+
+    		// TODO: Connect to a channel based off the sha-1 sum of the secret
+    		var sha = CryptoJS.SHA1(SHARED_SECRET.toString()).toString();
+    		socket.emit("join", sha);
     	});
 
     	$('#encrypt').click(function() {
