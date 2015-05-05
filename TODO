@@ -1,0 +1,27 @@
+Needs to explain itself
+
+local storage
+	public 
+	secret
+
+landing page:
+	needs to explain what diffie is
+
+1. generate public key (cache)
+2. copy that key -> prompt for party 2's key
+3. go to chat page (generate secret and cache)
+	waits for other party
+4. chat and "do whatever"
+5. terminate chat (delete secret)
+
+diffie dot io 2554
+
+
+diffie.io
+	
+
+x: diffie?
+y: reet
+x: sexy
+
+Make a public thread private! ;) ;)
