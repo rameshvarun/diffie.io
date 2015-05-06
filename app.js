@@ -1,6 +1,6 @@
 // TODO: Load from environment variables
 global.PORT = 3000;
-global.URL = "http://localhost:3000";
+global.URL = process.env.URL || "http://localhost:3000";
 
 var nunjucks = require('nunjucks');
 var app = require('express')();
