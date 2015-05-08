@@ -1,155 +1,47 @@
+<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- JQuery -->
+    <script src="//code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 
-<!-- JQuery -->
-<script src="//code.jquery.com/jquery-1.10.1.min.js"></script>
-<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/aes.js"></script>
+    <script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/rabbit.js"></script>
+    <script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
+    <script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha1.js"></script>
 
-<script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/aes.js"></script>
-<script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/rabbit.js"></script>
-<script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
-<script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha1.js"></script>
+    <!-- Bootstrap -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
-<!-- Bootstrap -->
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
 
-<script src="/socket.io/socket.io.js"></script>
+    <script>
+    	var APP_URL = "{{ URL }}";
+    </script>
+    <script src="diffie.js"></script>
+    <link href="styles.css" rel="stylesheet">
 
-<script>
-	var socket = io("{{ URL }}");
-	socket.on('message', function(data) {
-		var decrypted = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(data, SHARED_SECRET.toString()));
-		addMessage(false, decrypted);
-	});
-
-	function addMessage(mine, message) {
-		var text = mine ? "<b>Me:</b> " : "<b>Them:</b> ";
-		text += message;
-    	text += "<br>";
-    	$("#chatlog").html($("#chatlog").html() + text);
-    }
-
-	function randomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
-	function modExp(base, exponent, mod) {
-		var answer = 1;
-		for(var i = 0; i < exponent; ++i) {
-			answer = (answer * base) % mod;
-		}
-		return answer;
-	}
-	
-	var AESCipher = {
-		encrypt : function(message, key) {
-			return CryptoJS.AES.encrypt(message, "" + key);
-		},
-		decrypt : function(encrypted, key) {
-			return CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encrypted, "" + key));
-		}
-	};
-
-	var SubstitutionCipher = {
-		encrypt : function(message, key) {
-			var encrypted = "";
-			for(var i = 0; i < message.length; ++i) {
-				var shift = CryptoJS.MD5("" + (i + key)).words[0];
-
-				var index = valid_characters.indexOf(message[i]) + shift;
-				while(index < 0) index += valid_characters.length;
-				index %= valid_characters.length
-
-				encrypted += valid_characters[index];
-			}
-			return encrypted;
-		},
-		decrypt : function(encrypted, key) {
-			var message = "";
-			for(var i = 0; i < encrypted.length; ++i) {
-				var shift = CryptoJS.MD5("" + (i + key)).words[0];
-
-				var index = valid_characters.indexOf(encrypted[i]) - shift;
-				while(index < 0) index += valid_characters.length;
-				index %= valid_characters.length
-
-				message += valid_characters[index ];
-			}
-			return message;
-		}
-	};
-
-	var cipher = SubstitutionCipher;
-
-    var DHE_PRIME = 2698727; // Should be a safe prime
-    var DHE_BASE = 5;
-
-    var MY_SECRET = randomInt(0, 4000);
-    var MY_PUBLIC_KEY = modExp(DHE_BASE, MY_SECRET, DHE_PRIME);
-
-    var THEIR_PUBLIC_KEY;
-    var SHARED_SECRET;
-
-    var alphabet = "abcdefghijklmnopqrstuvwxyz";
-    var valid_characters = "-()0123456789" + alphabet;
-
-    $(function() {
-    	$('#publickey').html(MY_PUBLIC_KEY.toString(36));
-    	$('#start').click(function() {
-    		THEIR_PUBLIC_KEY = parseInt($('#theirkey').val(), 36);
-    		SHARED_SECRET = modExp(THEIR_PUBLIC_KEY, MY_SECRET, DHE_PRIME);
-    		$('#shared').html(SHARED_SECRET.toString(36));
-    		$("#keyenter").fadeOut();
-    		$('#communicate').fadeIn();
-
-    		// TODO: Connect to a channel based off the sha-1 sum of the secret
-    		var sha = CryptoJS.SHA1(SHARED_SECRET.toString()).toString();
-    		socket.emit("join", sha);
-    	});
-
-    	
-
-    	$('#send').click(function() {
-    		var message = $('#message').val();
-    		socket.emit("message", CryptoJS.AES.encrypt(message, SHARED_SECRET.toString()).toString());
-    		addMessage(true, message);
-    		$('#message').val("");
-    	});
-    })
-</script>
-
-<style>
-
-body {
-	margin:0;
-	background-color:C83BA9;
-}
-
-</style>
-
+    <title>diffie.io</title>
 </head>
 
 <body>
-
-Your Public Key: <div id="publickey"></div>
-
-<div id="keyenter">
-Their Public Key: <input id="theirkey"></input>
-<button id="start">Start Communicating</button>
-</div>
-
-<div id="communicate" hidden>
-Shared Secret: <div id='shared'></div>
-
-<div id='chatlog' class="well"></div>
-<input id='message'></input><button id="send">Send</button>
-
-</div>
-
-
+    Your Public Key:
+    <div id="publickey"></div>
+    <div id="keyenter">
+        Their Public Key: <input id="theirkey"> <button id="start">Start
+        Communicating</button>
+    </div>
+    <div hidden="" id="communicate">
+        Shared Secret:
+        <div id='shared'></div>
+        <div class="well" id='chatlog'></div><input id='message'><button id=
+        "send">Send</button>
+    </div>
 </body>
-
 </html>

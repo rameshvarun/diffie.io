@@ -3,7 +3,8 @@ global.PORT = 3000;
 global.URL = process.env.URL || "http://localhost:3000";
 
 var nunjucks = require('nunjucks');
-var app = require('express')();
+var express = require('express');
+var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
@@ -12,6 +13,8 @@ nunjucks.configure('templates', {
     express: app,
     watch: true
 });
+
+app.use(express.static('public'));
 
 app.get('/', function (req, res) {
   res.render("index.html", {
