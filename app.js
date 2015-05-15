@@ -7,6 +7,10 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var crypto = require('crypto');
+var LRU = require('lru-cache');
+
+var cache = new LRU(10000);
 
 nunjucks.configure('templates', {
     autoescape: true,
@@ -23,19 +27,46 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', function (socket) {
-	var ROOM;
+  var room;
+
+  socket.on('newdhe', function() {
+    var dhe = crypto.createECDH('secp256k1');
+    dhe.generateKeys();
+
+    var full_public = dhe.getPublicKey('hex');
+    var short_public = full_public.substring(0, 6)
+    cache.set(short_public, full_public)
+
+    socket.emit('dhekeys', {
+      private: dhe.getPrivateKey('hex'),
+      public: full_public,
+      short_public: short_public
+    });
+  });
+
+  socket.on('getsecret', function(keys) {
+    // TODO: Confirm that keys are the correct size
+
+    var dhe = crypto.createECDH('secp256k1');
+    dhe.setPrivateKey(keys.private, 'hex');
+    dhe.setPublicKey(keys.public, 'hex');
+
+    var shared_secret = dhe.computeSecret(cache.get(keys.other_public), 'hex', 'hex');
+    socket.emit('sharedsecret', shared_secret);
+  });
+
 	socket.on('join', function (data) {
 		// Join channel based off of the sha sum in data
 		// TODO: Confirm that data is a valid sha checksum
 		socket.join(data);
-		ROOM = data;
-		console.log("A user joined room " + ROOM + "...");
+    room = data;
+		console.log("A user joined room " + room + "...");
 	});
 
 	socket.on('message', function (data) {
 		// TODO: Do some checks to make sure data is am AES encrypted string
 		console.log("Message: " + data);
-		socket.broadcast.to(ROOM).emit('message', data);
+		socket.broadcast.to(room).emit('message', data);
 	});
 });
 
