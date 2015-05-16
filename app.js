@@ -10,7 +10,7 @@ var io = require('socket.io')(server);
 var crypto = require('crypto');
 var LRU = require('lru-cache');
 
-var cache = new LRU(10000);
+var cache = new LRU(130*2*1000);
 
 nunjucks.configure('templates', {
     autoescape: true,
