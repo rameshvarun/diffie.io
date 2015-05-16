@@ -34,7 +34,7 @@ io.on('connection', function (socket) {
     dhe.generateKeys();
 
     var full_public = dhe.getPublicKey('hex');
-    var short_public = full_public.substring(0, 6)
+    var short_public = parseInt(full_public.substring(0, 7), 16).toString(36)
     cache.set(short_public, full_public)
 
     socket.emit('dhekeys', {
