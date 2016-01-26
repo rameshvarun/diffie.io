@@ -70,4 +70,6 @@ io.on('connection', function (socket) {
 	});
 });
 
-server.listen(3000);
+server.listen(3000, function() {
+	console.log("Running at " + URL);
+});
